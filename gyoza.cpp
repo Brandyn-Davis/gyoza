@@ -4,7 +4,6 @@
 
 //#define MECAB_ARGS "-d /usr/local/lib/mecab/dic/unidic/"
 #define MECAB_ARGS "-d /var/lib/mecab/dic/unidic"
-//#define FEATURE_LEN 17
 #define FEATURE_LEN 10
 #define FEATURE_STR_LEN 64
 #define FEATURESTR_LEN 256
@@ -63,13 +62,13 @@ std::string Gyoza::romaji(char* jpText) {
     std::string romaji;
     std::string romajiFinal;
     char* pch;
+    char currKana[FEATURE_STR_LEN] = "";
+    char prevKana[FEATURE_STR_LEN] = "";
+    char featureStr[FEATURESTR_LEN] = "";
 
     // Print words (nodes)
     for (; node; node = node->next) {
-        char currKana[FEATURE_STR_LEN];
-        char prevKana[FEATURE_STR_LEN];
         char features[FEATURE_LEN][FEATURE_STR_LEN] = {""};
-        char featureStr[FEATURESTR_LEN] = "";
         strcpy(featureStr, node->feature);  // get non-const version
 
         // store first few node features in array
