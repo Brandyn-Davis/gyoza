@@ -65,10 +65,11 @@ std::string Gyoza::romaji(char* jpText) {
     char currKana[FEATURE_STR_LEN] = "";
     char prevKana[FEATURE_STR_LEN] = "";
     char featureStr[FEATURESTR_LEN] = "";
+    //char features[FEATURE_LEN][FEATURE_STR_LEN] = {""};
+    char features[FEATURE_LEN][FEATURE_STR_LEN];
 
     // Print words (nodes)
     for (; node; node = node->next) {
-        char features[FEATURE_LEN][FEATURE_STR_LEN] = {""};
         strcpy(featureStr, node->feature);  // get non-const version
 
         // store first few node features in array

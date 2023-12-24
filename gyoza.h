@@ -5,7 +5,7 @@
 #include <cstdio>
 #include <cstring>
 #include <mecab.h>
-#include "romaji.h"
+#include "romaji-cpp/romaji.h"
 
 class Gyoza {
     public:
