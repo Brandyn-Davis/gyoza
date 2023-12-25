@@ -1,3 +1,3 @@
-# ![gyoza logo](gyoza.svg?raw=true) gyoza
+# ![gyoza logo](gyoza.png?raw=true) gyoza
 
 Gyoza converts Japanese to romaji.
