@@ -1,1 +1,3 @@
-![alt text](https://github.com/Brandyn-Davis/gyoza/blob/main/gyoza.svg?raw=true)
+# ![gyoza logo](gyoza.svg?raw=true) gyoza
+
+Gyoza converts Japanese to romaji.
