@@ -9,6 +9,7 @@
 #define FEATURESTR_LEN 256
 #define INPUT_MAX_LEN 1024
 #define DICTSTR_MAX_LEN 256
+#define FW_DIG_SIZE 3   // Number of bytes in a fullwidth digit
 
 
 // strtok but with consecutive delim handling
@@ -52,7 +53,27 @@ Gyoza::Gyoza(const char* dictStr) {
     CHECK(tagger);
 }
 
+void normalizeNums(char* str) {
+    int tempStrCounter = 0;
+    char tempStr[INPUT_MAX_LEN] = "";
+
+    for (size_t i = 0; i < strlen(str); i++) {
+        if (str[i] >= '0' && str[i] <= '9') {           // If is halfwidth digit,
+            uint64_t c = 0x90BCEF|((str[i]&0xF)<<16);   // Turn into fullwidth digit
+            memcpy(tempStr+tempStrCounter, &c, FW_DIG_SIZE);    // Append fullwidth digit to temp string
+            tempStrCounter += FW_DIG_SIZE;
+        }
+        else {
+            tempStr[tempStrCounter++] = str[i];
+        }
+    }
+
+    strcpy(str, tempStr);
+}
+
 std::string Gyoza::romaji(char* jpText) {
+    normalizeNums(jpText);
+
     // Parse input as nodes
     node = tagger->parseToNode(jpText);
     CHECK(node);
@@ -63,13 +84,12 @@ std::string Gyoza::romaji(char* jpText) {
     std::string romajiFinal;
     char* pch;
     char currKana[FEATURE_STR_LEN] = "";
-    char prevKana[FEATURE_STR_LEN] = "";
-    char featureStr[FEATURESTR_LEN] = "";
-    //char features[FEATURE_LEN][FEATURE_STR_LEN] = {""};
-    char features[FEATURE_LEN][FEATURE_STR_LEN];
 
     // Print words (nodes)
     for (; node; node = node->next) {
+        char prevKana[FEATURE_STR_LEN] = "";
+        char featureStr[FEATURESTR_LEN] = "";
+        char features[FEATURE_LEN][FEATURE_STR_LEN] = {""};
         strcpy(featureStr, node->feature);  // get non-const version
 
         // store first few node features in array
@@ -80,6 +100,7 @@ std::string Gyoza::romaji(char* jpText) {
         }
 
         strcpy(prevKana, currKana);
+        memset(currKana, 0, sizeof(currKana));
         strcpy(currKana, features[9]);
 
 #ifdef DEBUG
@@ -87,7 +108,9 @@ std::string Gyoza::romaji(char* jpText) {
 #endif
 
         // Romajify node
-        if (features[9][0] != '*' && node->surface[0] != ',') {
+        //if (node->surface[0] != ',' && strcmp(node->surface, "") != 0) {
+        //if (features[9][0] != '*' && node->surface[0] != ',') {
+        if (strcmp(features[0], "BOS/EOS") != 0 && node->surface[0] != ',') {
             japanese::utf8_kana_to_romaji(features[9], romaji);
             
             //if (prevKana[strlen(prevKana)-1] == (char)'ッ' && romaji != "") { 
@@ -95,10 +118,12 @@ std::string Gyoza::romaji(char* jpText) {
                 romajiFinal += romaji.front() + romaji;
             }
             else if (strcmp(features[1], "読点") == 0) {
-                romajiFinal += (node->next->length == 0) ? "," : ", ";
+                romajiFinal += ",";
+                //romajiFinal += (node->next->length == 0) ? "," : ", ";
             }
             else if (strcmp(features[1], "句点") == 0) {
-                romajiFinal += (node->next->length == 0) ? "." : ". ";
+                romajiFinal += ".";
+                //romajiFinal += (node->next->length == 0) ? "." : ". ";
             }
             else {
                 romajiFinal += (node->prev->length == 0 || strlen(prevKana) == 0) ? romaji : " "+romaji;
