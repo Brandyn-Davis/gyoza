@@ -4,13 +4,15 @@
 
 //#define MECAB_ARGS "-d /usr/local/lib/mecab/dic/unidic/"
 #define MECAB_ARGS "-d /var/lib/mecab/dic/unidic"
-#define FEATURE_LEN 10
-#define FEATURE_STR_LEN 64
+#define FEATURE_LEN 17
+#define FEATURE_STR_LEN 128
 #define FEATURESTR_LEN 256
 #define INPUT_MAX_LEN 1024
 #define DICTSTR_MAX_LEN 256
 #define FW_DIG_SIZE 3   // Number of bytes in a fullwidth digit
 
+#define IS_SMALL_TSU(s) ((s[strlen(s)-1]&0x3F)|(s[strlen(s)-2]&0x3)<<6)==(L'ッ'&0xFF)
+#define ASCII_TO_UTF8(c) ((!isupper(c)<<8)|(((c-0x20)&0x3f)|0x80))|0xefbc00
 
 // strtok but with consecutive delim handling
 char* strtoke(char* str, const char* delim) {
@@ -30,6 +32,25 @@ void printNode(const MeCab::Node* node, char features[][FEATURE_STR_LEN]) {
         printf("[%s]", features[j]);
     }
     std::cout << std::endl;
+}
+
+bool isfullalpha(const char* str) {
+    char tempStr[3];
+    uint32_t c = 0;
+    memcpy(tempStr, str, FW_DIG_SIZE);
+    std::reverse(tempStr, tempStr+FW_DIG_SIZE);
+    memcpy(&c, tempStr, FW_DIG_SIZE);
+
+    return (c >= 0xefbca1 && c <= 0xefbcba) || (c >= 0xefbd81 && c <= 0xefbd9a);
+}
+
+// Halfwidth string characters to fullwidth characters
+void halfToFull(char* str, char* retStr) {
+    for (size_t i = 0; i < strlen(str); i++) {
+        uint32_t c = ASCII_TO_UTF8(str[i]);
+        memcpy(retStr+i*FW_DIG_SIZE, &c, FW_DIG_SIZE);
+        std::reverse(retStr+i*FW_DIG_SIZE, retStr+(i+1)*FW_DIG_SIZE);
+    }
 }
 
 Gyoza::Gyoza(const char* dictStr) {
@@ -78,7 +99,11 @@ std::string Gyoza::romaji(char* jpText) {
     node = tagger->parseToNode(jpText);
     CHECK(node);
 
-//    std::cout << node->feature << std::endl;
+//    while (node->next != nullptr) {
+//        std::cout << node->feature << std::endl;
+//        node = node->next;
+//    }
+//    exit(1);
 
     std::string romaji;
     std::string romajiFinal;
@@ -92,11 +117,23 @@ std::string Gyoza::romaji(char* jpText) {
         char features[FEATURE_LEN][FEATURE_STR_LEN] = {""};
         strcpy(featureStr, node->feature);  // get non-const version
 
+        if (strlen(featureStr))
+
         // store first few node features in array
+//        pch = strtoke(featureStr, ",");
+//        for (int i = 0; i < FEATURE_LEN; i++) {
+//            strcpy(features[i], pch);
+//            pch = strtoke(NULL, ",");   
+//        }
         pch = strtoke(featureStr, ",");
         for (int i = 0; i < FEATURE_LEN; i++) {
-            strcpy(features[i], pch);
-            pch = strtoke(NULL, ",");   
+            if (pch == NULL) {
+                strcpy(features[i], "*");
+            }
+            else {
+                strcpy(features[i], pch);
+                pch = strtoke(NULL, ",");   
+            }
         }
 
         strcpy(prevKana, currKana);
@@ -111,10 +148,25 @@ std::string Gyoza::romaji(char* jpText) {
         //if (node->surface[0] != ',' && strcmp(node->surface, "") != 0) {
         //if (features[9][0] != '*' && node->surface[0] != ',') {
         if (strcmp(features[0], "BOS/EOS") != 0 && node->surface[0] != ',') {
-            japanese::utf8_kana_to_romaji(features[9], romaji);
+            if (strcmp(features[9], "*") == 0 && isalpha(node->surface[0])) {
+                char hwStr[FEATURE_STR_LEN] = "";
+                char fwStr[FEATURE_STR_LEN] = "";
+                memcpy(hwStr, node->surface, node->length);
+                halfToFull(hwStr, fwStr);
+                japanese::utf8_kana_to_romaji(fwStr, romaji);
+            }
+            else if (strcmp(features[9], "*") == 0 && isfullalpha(node->surface)) {
+                char tempStr[FEATURE_STR_LEN] = "";
+                memcpy(tempStr, node->surface, node->length);
+                japanese::utf8_kana_to_romaji(tempStr, romaji);
+            }
+            else {
+                japanese::utf8_kana_to_romaji(features[9], romaji);
+            }
             
             //if (prevKana[strlen(prevKana)-1] == (char)'ッ' && romaji != "") { 
-            if (((prevKana[strlen(prevKana)-1]&0x3F) | (prevKana[strlen(prevKana)-2]&0x3)<<6) == (L'ッ'&0xFF)) {
+            //if (((prevKana[strlen(prevKana)-1]&0x3F) | (prevKana[strlen(prevKana)-2]&0x3)<<6) == (L'ッ'&0xFF)) {
+            if (IS_SMALL_TSU(prevKana)) {
                 romajiFinal += romaji.front() + romaji;
             }
             else if (strcmp(features[1], "読点") == 0) {
@@ -125,6 +177,11 @@ std::string Gyoza::romaji(char* jpText) {
                 romajiFinal += ".";
                 //romajiFinal += (node->next->length == 0) ? "." : ". ";
             }
+//            else if (strcmp(features[1], "括弧開") || strcmp(features[1], "括弧閉")) {
+//            }
+//            else if (features[9][0] == '*') {
+//                romajiFinal += ();
+//            }
             else {
                 romajiFinal += (node->prev->length == 0 || strlen(prevKana) == 0) ? romaji : " "+romaji;
             }

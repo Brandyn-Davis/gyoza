@@ -4,6 +4,8 @@
 #include <iostream>
 #include <cstdio>
 #include <cstring>
+#include <cctype>
+#include <algorithm>
 #include <mecab.h>
 #include "romaji-cpp/romaji.h"
 
