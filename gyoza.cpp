@@ -110,21 +110,15 @@ std::string Gyoza::romaji(char* jpText) {
     char* pch;
     char currKana[FEATURE_STR_LEN] = "";
 
-    // Print words (nodes)
     for (; node; node = node->next) {
         char prevKana[FEATURE_STR_LEN] = "";
         char featureStr[FEATURESTR_LEN] = "";
         char features[FEATURE_LEN][FEATURE_STR_LEN] = {""};
         strcpy(featureStr, node->feature);  // get non-const version
 
-        if (strlen(featureStr))
+        //if (strlen(featureStr))
 
-        // store first few node features in array
-//        pch = strtoke(featureStr, ",");
-//        for (int i = 0; i < FEATURE_LEN; i++) {
-//            strcpy(features[i], pch);
-//            pch = strtoke(NULL, ",");   
-//        }
+        // Store node features in array
         pch = strtoke(featureStr, ",");
         for (int i = 0; i < FEATURE_LEN; i++) {
             if (pch == NULL) {
@@ -183,7 +177,7 @@ std::string Gyoza::romaji(char* jpText) {
 //                romajiFinal += ();
 //            }
             else {
-                romajiFinal += (node->prev->length == 0 || strlen(prevKana) == 0) ? romaji : " "+romaji;
+                romajiFinal += (node->prev->length == 0 || strlen(prevKana) == 0 || romaji == "") ? romaji : " "+romaji;
             }
             
             romaji = "";
