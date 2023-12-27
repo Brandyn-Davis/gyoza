@@ -13,6 +13,7 @@
 
 #define IS_SMALL_TSU(s) ((s[strlen(s)-1]&0x3F)|(s[strlen(s)-2]&0x3)<<6)==(L'ッ'&0xFF)
 #define ASCII_TO_UTF8(c) ((!isupper(c)<<8)|(((c-0x20)&0x3f)|0x80))|0xefbc00
+#define FITS(s) (strlen(s)<INPUT_MAX_LEN)
 
 // strtok but with consecutive delim handling
 char* strtoke(char* str, const char* delim) {
@@ -97,7 +98,9 @@ void Gyoza::setQuotes(bool enableQuotes) {
 }
 
 std::string Gyoza::romaji(char* jpText) {
+    if (!FITS(jpText)) return "";
     normalizeNums(jpText);
+    if (!FITS(jpText)) return "";
 
     // Parse input as nodes
     node = tagger->parseToNode(jpText);
@@ -191,6 +194,9 @@ std::string Gyoza::romaji(char* jpText) {
             else if (strcmp(features[1], "括弧閉") == 0 && quotesEnabled) {
                 romajiFinal += "\"";
             }
+            else if (node->surface[0] == '"' && quotesEnabled) {
+                romajiFinal += "\"";
+            }
             else {
                 romajiFinal += (node->prev->length == 0 || strlen(prevKana) == 0 || romaji == "" || (strcmp(prevFeatures[1], "括弧開") == 0 && quotesEnabled)) ? romaji : " "+romaji;
             }
@@ -198,6 +204,7 @@ std::string Gyoza::romaji(char* jpText) {
             romaji = "";
         }
         else {
+            printf("<%s>", currKana);
         }
     }
   
