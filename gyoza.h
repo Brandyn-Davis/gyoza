@@ -13,9 +13,11 @@ class Gyoza {
     public:
         Gyoza(const char* dictStr);
         std::string romaji(char* jpText);
+        void setQuotes(bool enableQuotes);
     private:
         MeCab::Tagger* tagger;
         const MeCab::Node* node;
+        bool quotesEnabled = true;
 };
 
 #endif

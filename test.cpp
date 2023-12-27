@@ -12,6 +12,7 @@ int main(int argc, char* argv[]) {
 //    const char path[] = "/var/lib/mecab/dic/unidic";
 
     Gyoza gyoza(DICT_PATH);
+    gyoza.setQuotes(true);
 
     if (argc == 2) {
         std::cout << gyoza.romaji(argv[1]) << std::endl;

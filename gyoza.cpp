@@ -92,6 +92,10 @@ void normalizeNums(char* str) {
     strcpy(str, tempStr);
 }
 
+void Gyoza::setQuotes(bool enableQuotes) {
+    quotesEnabled = enableQuotes;
+}
+
 std::string Gyoza::romaji(char* jpText) {
     normalizeNums(jpText);
 
@@ -109,18 +113,28 @@ std::string Gyoza::romaji(char* jpText) {
     std::string romajiFinal;
     char* pch;
     char currKana[FEATURE_STR_LEN] = "";
+    char prevFeatures[FEATURE_LEN][FEATURE_STR_LEN] = {""};
+    char features[FEATURE_LEN][FEATURE_STR_LEN] = {""};
 
     for (; node; node = node->next) {
         char prevKana[FEATURE_STR_LEN] = "";
         char featureStr[FEATURESTR_LEN] = "";
-        char features[FEATURE_LEN][FEATURE_STR_LEN] = {""};
         strcpy(featureStr, node->feature);  // get non-const version
 
         //if (strlen(featureStr))
 
+        // Store old features if features have already been filled
+        if (features[0][0] != '\0') {
+            for (int i = 0; i < FEATURE_LEN; i++) {
+                strcpy(prevFeatures[i], features[i]);
+            }
+        }
+
         // Store node features in array
         pch = strtoke(featureStr, ",");
         for (int i = 0; i < FEATURE_LEN; i++) {
+            memset(features[i], 0, FEATURE_STR_LEN);  // Clear str
+
             if (pch == NULL) {
                 strcpy(features[i], "*");
             }
@@ -171,13 +185,14 @@ std::string Gyoza::romaji(char* jpText) {
                 romajiFinal += ".";
                 //romajiFinal += (node->next->length == 0) ? "." : ". ";
             }
-//            else if (strcmp(features[1], "括弧開") || strcmp(features[1], "括弧閉")) {
-//            }
-//            else if (features[9][0] == '*') {
-//                romajiFinal += ();
-//            }
+            else if (strcmp(features[1], "括弧開") == 0 && quotesEnabled) {
+                romajiFinal += " \"";
+            }
+            else if (strcmp(features[1], "括弧閉") == 0 && quotesEnabled) {
+                romajiFinal += "\"";
+            }
             else {
-                romajiFinal += (node->prev->length == 0 || strlen(prevKana) == 0 || romaji == "") ? romaji : " "+romaji;
+                romajiFinal += (node->prev->length == 0 || strlen(prevKana) == 0 || romaji == "" || (strcmp(prevFeatures[1], "括弧開") == 0 && quotesEnabled)) ? romaji : " "+romaji;
             }
             
             romaji = "";
