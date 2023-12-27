@@ -11,7 +11,8 @@
 
 class Gyoza {
     public:
-        Gyoza(const char* dictStr);
+        Gyoza();
+        int setDict(const char* dictStr);
         std::string romaji(char* jpText);
         void setQuotes(bool enableQuotes);
     private:

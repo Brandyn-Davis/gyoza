@@ -1,6 +1,6 @@
 #include "gyoza.h"
 
-#define CHECK(eval) if(!eval){std::cerr<<"Exception\n";}
+#define CHECK(eval) if(!eval){std::cerr<<"Exception\n";exit(1);}
 
 //#define MECAB_ARGS "-d /usr/local/lib/mecab/dic/unidic/"
 #define MECAB_ARGS "-d /var/lib/mecab/dic/unidic"
@@ -54,25 +54,22 @@ void halfToFull(char* str, char* retStr) {
     }
 }
 
-Gyoza::Gyoza(const char* dictStr) {
+Gyoza::Gyoza() {
+    // Sets tagger with default dictionary
+    tagger = MeCab::createTagger("");
+}
+
+int Gyoza::setDict(const char* dictStr) {
     char dictArg[DICTSTR_MAX_LEN];
 
     // Create tagger with correct dictionary
     if (strlen(dictStr) < DICTSTR_MAX_LEN-3) {
         strcpy(dictArg+3, dictStr);
         memcpy(dictArg, "-d ", 3);
-        //std::cout << "Using argument \"" << dictArg << "\"" << std::endl;
         tagger = MeCab::createTagger(dictArg);
     }
-    else if (strlen(dictStr) == 0) {
-        std::cout << "No MeCab dictionary path provided. Using default..." << std::endl;
-        tagger = MeCab::createTagger("");
-    }
-    else {
-        std::cout << "MeCab dictionary path string is too long! Using default..." << std::endl;
-        tagger = MeCab::createTagger("");
-    }
-    CHECK(tagger);
+
+    return (tagger) ? 0 : -1;
 }
 
 void normalizeNums(char* str) {
@@ -103,14 +100,9 @@ std::string Gyoza::romaji(char* jpText) {
     if (!FITS(jpText)) return "";
 
     // Parse input as nodes
+    if (!tagger) return "";
     node = tagger->parseToNode(jpText);
-    CHECK(node);
-
-//    while (node->next != nullptr) {
-//        std::cout << node->feature << std::endl;
-//        node = node->next;
-//    }
-//    exit(1);
+    if (!node) return "";
 
     std::string romaji;
     std::string romajiFinal;
@@ -204,7 +196,6 @@ std::string Gyoza::romaji(char* jpText) {
             romaji = "";
         }
         else {
-            printf("<%s>", currKana);
         }
     }
   
