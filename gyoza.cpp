@@ -151,20 +151,20 @@ std::string Gyoza::romaji(char* jpText) {
         //if (node->surface[0] != ',' && strcmp(node->surface, "") != 0) {
         //if (features[9][0] != '*' && node->surface[0] != ',') {
         if (strcmp(features[0], "BOS/EOS") != 0 && node->surface[0] != ',') {
-            if (strcmp(features[9], "*") == 0 && isalpha(node->surface[0])) {
+            if (strcmp(currKana, "*") == 0 && isalpha(node->surface[0])) {
                 char hwStr[FEATURE_STR_LEN] = "";
                 char fwStr[FEATURE_STR_LEN] = "";
                 memcpy(hwStr, node->surface, node->length);
                 halfToFull(hwStr, fwStr);
                 japanese::utf8_kana_to_romaji(fwStr, romaji);
             }
-            else if (strcmp(features[9], "*") == 0 && isfullalpha(node->surface)) {
+            else if (strcmp(currKana, "*") == 0 && isfullalpha(node->surface)) {
                 char tempStr[FEATURE_STR_LEN] = "";
                 memcpy(tempStr, node->surface, node->length);
                 japanese::utf8_kana_to_romaji(tempStr, romaji);
             }
             else {
-                japanese::utf8_kana_to_romaji(features[9], romaji);
+                japanese::utf8_kana_to_romaji(currKana, romaji);
             }
             
             //if (prevKana[strlen(prevKana)-1] == (char)'ッ' && romaji != "") { 

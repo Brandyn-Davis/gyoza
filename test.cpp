@@ -3,8 +3,8 @@
 #include <cassert>
 #include "gyoza.h"
 
-//#define DICT_PATH "/var/lib/mecab/dic/unidic"
-#define DICT_PATH "/var/lib/mecab/"
+#define DICT_PATH "/var/lib/mecab/dic/unidic"
+//#define DICT_PATH "/var/lib/mecab/"
 
 int main(int argc, char* argv[]) {
     if (argc == 1) return 1;                // No input text
